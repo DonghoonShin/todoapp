@@ -88,7 +88,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/40 flex items-start justify-center px-4 py-10">
+    <div className="min-h-screen bg-orange-300 flex items-start justify-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Todo</CardTitle>

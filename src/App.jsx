@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
@@ -36,6 +36,9 @@ function App() {
   const [todos, setTodos] = useState(loadTodos)
   const [inputValue, setInputValue] = useState('')
   const [syncError, setSyncError] = useState(null)
+  // Once the user mutates todos locally, an in-flight initial GET must not
+  // clobber that change with a stale server snapshot.
+  const hasMutatedRef = useRef(false)
 
   useEffect(() => {
     localStorage.setItem('todos', JSON.stringify(todos))
@@ -45,7 +48,9 @@ function App() {
     if (!SHEETS_API_URL) return
     fetch(SHEETS_API_URL)
       .then((res) => res.json())
-      .then((data) => setTodos(data))
+      .then((data) => {
+        if (!hasMutatedRef.current) setTodos(data)
+      })
       .catch(() =>
         setSyncError('구글 시트를 불러오지 못했습니다. 로컬 데이터를 표시합니다.')
       )
@@ -56,6 +61,7 @@ function App() {
     const trimmed = inputValue.trim()
     if (!trimmed) return
     const newTodo = { id: crypto.randomUUID(), text: trimmed, completed: false }
+    hasMutatedRef.current = true
     setTodos((prev) => [...prev, newTodo])
     setInputValue('')
     syncToSheet('add', newTodo).catch(() =>
@@ -64,6 +70,7 @@ function App() {
   }
 
   function toggleTodo(id) {
+    hasMutatedRef.current = true
     setTodos((prev) =>
       prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
     )
@@ -73,6 +80,7 @@ function App() {
   }
 
   function deleteTodo(id) {
+    hasMutatedRef.current = true
     setTodos((prev) => prev.filter((t) => t.id !== id))
     syncToSheet('delete', { id }).catch(() =>
       setSyncError('구글 시트에 저장하지 못했습니다.')

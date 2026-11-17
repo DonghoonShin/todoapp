@@ -1,0 +1,1 @@
+Tailscale net 으로 enso1 연결가능해?
